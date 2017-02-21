@@ -1,0 +1,56 @@
+package com.triman.utils;
+import org.htmlparser.Node;
+import org.htmlparser.NodeFilter;
+import org.htmlparser.Parser;
+import org.htmlparser.filters.NodeClassFilter;
+import org.htmlparser.filters.OrFilter;
+import org.htmlparser.tags.ImageTag;
+import org.htmlparser.tags.LinkTag;
+import org.htmlparser.util.NodeList;
+import org.htmlparser.util.ParserException;
+public class Catenate {
+	public static void main(String[] args) throws Exception {
+        String url = "http://sp.cqcoal.com/sell/list.php?catid=18";
+        extracLinks(url);
+    }
+
+    // 获取一个网页上所有的链接和图片链接
+    @SuppressWarnings("serial")
+    public static void extracLinks(String url) {
+        try {
+            Parser parser = new Parser(url);
+            parser.setEncoding("utf-8");
+            // 过滤 <frame> 标签的 filter，用来提取 frame 标签里的 src 属性所、表示的链接
+            NodeFilter frameFilter = new NodeFilter() {
+                public boolean accept(Node node) {
+                    if (node.getText().startsWith("frame src=")
+                    //||node.getText().contains("mcategory")
+                    //||(node.getText().contains("category")
+                    //||node.getText().startsWith("img src=")
+                    ) {
+                        return true;
+                    } else {
+                        return false;
+                    }
+                }
+            };
+            // OrFilter 来设置过滤 <a> 标签，<img> 标签和 <frame> 标签，三个标签是 or 的关系
+            OrFilter linkFilter = new OrFilter(new NodeClassFilter(
+                    LinkTag.class), frameFilter);
+            // 得到所有经过过滤的标签
+            NodeList list = parser.extractAllNodesThatMatch(linkFilter);
+            for (int i = 0; i < list.size(); i++) {
+                Node tag = list.elementAt(i);
+                if (tag instanceof LinkTag)// <a> 标签
+                {
+                    LinkTag link = (LinkTag) tag;
+                    String linkUrl = link.getLink();// url
+                    String text = link.getLinkText();// 链接文字
+                    System.out.println(linkUrl + "********" + text);
+                } 
+            }
+        } catch (ParserException e) {
+            e.printStackTrace();
+        }
+    }
+}
